@@ -1,4 +1,4 @@
-** 为了解决编程中int、long、double等常见数据类型数值范围的限制，
+**为了解决编程中int、long、double等常见数据类型数值范围的限制，
 设计了Bignumber类并实现基本的加减和乘法。**
 
 ## Bignumber类型简介
@@ -19,4 +19,8 @@ BignumberImpl了数据成员包括：
 - +,-,* : 加、减和乘法
 - getNegete() : 取反
 - getAbs() ： 取绝对值
+- getValue() : 取得一个字符串代表数值，这个字符串经过了一定的格式化
+
+## 其他
+项目中使用了googletest框架对代码进行测试。同时其他功能尚在开发
 
