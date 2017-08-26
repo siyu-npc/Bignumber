@@ -1,0 +1,5 @@
+*.o
+*.user*
+*.gch
+*.pro
+*.pri
