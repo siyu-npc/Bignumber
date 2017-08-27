@@ -54,16 +54,6 @@ extern std::istream& operator >> (std::istream& in,BignumberImpl& num);
 
 extern std::ostream& operator << (std::ostream& out,const BignumberImpl& num);
 
-
-
-
-/***********************************************
- *  对代表数值的字符串进行格式化：清除数字前或后无意义的0
- * 对任意一个合法的数值字符串，格式化后变为以下形式：
- * 1.字符串第0位为符号位：+、-
- * 2.整数格式化后不包含小数点，整数开头的0会被清除
- * 3.如果存在小数部分，则小数部分之后的0会被清除
- ***********************************************/
 extern void formatString(std::string & numStr);
 
 #endif // BIGNUMBERIMPL_H

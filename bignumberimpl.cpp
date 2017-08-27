@@ -2,48 +2,6 @@
 #include "gtest/gtest.h"
 #include <regex>
 
-
-void formatString(std::string & numStr){
-    std::string tmp;
-    size_t nonZeroBegin = 0;
-    if (numStr[0] == '-' || numStr[0] == '+') {
-        tmp.push_back(numStr[0]);
-        nonZeroBegin = numStr.find_first_not_of('0',1);
-    }
-    else{
-        tmp.push_back('+');
-        nonZeroBegin = numStr.find_first_not_of('0');
-    }
-    if (nonZeroBegin == std::string::npos){
-        numStr = "+0";
-        return;
-    }
-    size_t endPos = 0,dotPos = 0;
-    if ((dotPos = numStr.find('.')) != std::string::npos){
-        size_t nonZeroEnd   = numStr.find_last_not_of('0');
-        if (dotPos < nonZeroEnd) endPos = nonZeroEnd;
-        else endPos = dotPos - 1;
-    }
-    else endPos = numStr.size() - 1;
-    if (nonZeroBegin == dotPos) nonZeroBegin -= 1;
-    do {
-        tmp.push_back(numStr[nonZeroBegin]);
-    } while ((++nonZeroBegin) <= endPos);
-    numStr = tmp;
-}
-
-TEST(FormatString,formatStringOfNumber){
-    const char * inputCases[] = {"","0","0000","+000123","-000123","000123.","+000123000","-000123000",\
-                                 "0.0","00012.23","+000123.23","-000123.23","0001.00","000123.000","0.000222","000.0222"};
-    const char * checkCases[] = {"+0","+0","+0","+123","-123","+123","+123000","-123000",\
-                                 "+0","+12.23","+123.23","-123.23","+1","+123","+0.000222","+0.0222"};
-    for (size_t i = 0;i < sizeof(inputCases) / sizeof(char *);++i){
-        std::string tmp = inputCases[i];
-        formatString(tmp);
-        EXPECT_EQ(tmp,std::string(checkCases[i]))<<" inputCases["<<i<<"] is failed!";
-    }
-}
-
 std::string BignumberImpl::getValue() const {
     std::string result(this->size(),'0');
     if (isNegetive()) result[0] = '-';
@@ -209,6 +167,8 @@ static std::string positiveSub(const std::string & num1,size_t dot1,const std::s
     formatString(result);
     return result;
 }
+
+
 TEST(Calculate,SubTwoPositive){
     EXPECT_EQ(positiveSub("+1234",0,"+1234",0),"+0");
     EXPECT_EQ(positiveSub("+999999999777777777666666666",0,"+444444444333333333222222222",0),\
@@ -291,7 +251,6 @@ BignumberImpl BignumberImpl::operator - (const BignumberImpl & other) {
 }
 TEST(Calculate,BignumberImplOperatorAdd){
     EXPECT_EQ(BignumberImpl("+0") + BignumberImpl("+0"),BignumberImpl("+0"));
-    EXPECT_EQ(BignumberImpl("+0") + BignumberImpl("+0.0"),BignumberImpl("+0"));
     EXPECT_EQ(BignumberImpl("+0.0") + BignumberImpl("-0.0"),BignumberImpl("+0"));
     EXPECT_EQ(BignumberImpl("+1234") + BignumberImpl("-1234"),BignumberImpl("+0"));
     EXPECT_EQ(BignumberImpl("+1234.5678") + BignumberImpl("-1234.5678"),BignumberImpl("+0"));
@@ -314,10 +273,26 @@ TEST(Calculate,BignumberImplOperatorAdd){
     EXPECT_EQ(BignumberImpl("-23456.9876") + BignumberImpl("-1234567.897654321"),BignumberImpl("-1258024.885254321"));
 
 }
+TEST(Calculate,BignumberImplOperatorSub){
+    EXPECT_EQ(BignumberImpl("+0") - BignumberImpl("+0"),BignumberImpl("+0"));
+    EXPECT_EQ(BignumberImpl("+1234") - BignumberImpl("-1234"),BignumberImpl("+2468"));
+    EXPECT_EQ(BignumberImpl("+1234.5678") - BignumberImpl("-1234.5678"),BignumberImpl("+1234.5678") + BignumberImpl("+1234.5678"));
+    EXPECT_EQ(BignumberImpl("+1234") - BignumberImpl("+1234.01"),BignumberImpl("-0.01"));
+    EXPECT_EQ(BignumberImpl("+9999999999999999999999999999") - BignumberImpl("+9999999999999999999999999999"),\
+              BignumberImpl("+0"));
+    EXPECT_EQ(BignumberImpl("-1234.01") - BignumberImpl("-1234.01"),BignumberImpl("+0"));
+    EXPECT_EQ(BignumberImpl("+9999999999999999999999999999.999999999999999") - \
+              BignumberImpl("+9999999999999999999999999999.999999999999998"),\
+              BignumberImpl("+0.000000000000001"));
+    EXPECT_EQ(BignumberImpl("-9999999999999999999999999999.999999999999999") - \
+                            BignumberImpl("+9999999999999999999999999999"),\
+              BignumberImpl("-19999999999999999999999999998.999999999999999"));
+}
 std::istream& operator >> (std::istream& in,BignumberImpl& num){
     std::string str;
     in>>str;
     num = BignumberImpl(str);
+    std::cout<<"num = "<<num<<std::endl;
     return in;
 }
 
