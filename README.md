@@ -1,6 +1,8 @@
 **为了解决编程中int、long、double等常见数据类型数值范围的限制，
 设计了Bignumber类并实现基本的加减和乘法。**
 
+** 代码将在github和oschina上同步更新。 **
+
 ## Bignumber类型简介
 
 Bignumber可以代表无限大的整数、小数，并实现了基本的加、减和乘法
