@@ -19,6 +19,8 @@ public:
     Bignumber(const char* value,size_t n);//value must be a valid number,and n is the length of value
     Bignumber(const std::string& value);//initial by std::string
     Bignumber(long long num);//initial by long long
+	Bignumber(long num):Bignumber(static_cast<long long>(num)){};
+	Bignumber(int num):Bignumber(static_cast<long long>(num)){};
 //    Bignumber(double num);//initial by double
 
     Bignumber(const Bignumber& other);//copy constructor
