@@ -2,6 +2,8 @@
 #include "gtest/gtest.h"
 #include <regex>
 #include <exception>
+#include <cstdio>
+
 
 /******************************************
  * 对字符串进行检查其是否能够正确表示一个数值，能正确表示
@@ -113,19 +115,67 @@ TEST(Bignumber,ThrowExceptionInConstructor){
     EXPECT_NO_THROW(Bignumber("-1234.56000"));
 }
 Bignumber::Bignumber(const Bignumber &other){
-    value_.reset();
     value_  =  other.value_;
 }
 Bignumber::Bignumber(Bignumber && other){
-    value_  =   other.value_;
     other.value_    =   nullptr;
 }
+Bignumber::Bignumber(long long num){
+    constexpr int longMax = 24;//long long类型所能表示的最大数字的长度为20
+    char v[longMax];
+    std::memset(v,0,longMax);
+    if (num < 0) {
+        v[0] = '-';
+        num = -num;
+    }
+    else v[0] = '+';
+    std::sprintf(v + 1,"%lld",num);
+    std::string value(v);
+    formatString(value);
+    value_ = boost::shared_ptr<BignumberImpl> (new BignumberImpl(value));
+}
+TEST(Constructor,BignumberLongLongConstructor){
+    EXPECT_EQ(Bignumber(static_cast<long long>(1234)),Bignumber("1234"));
+    EXPECT_EQ(Bignumber(static_cast<long long>(-1234)),Bignumber("-1234"));
 
+#include <limits>
+    EXPECT_EQ(Bignumber(std::numeric_limits<long long>::max()),Bignumber("+9223372036854775807"));
+    EXPECT_EQ(Bignumber(std::numeric_limits<long long>::min()),Bignumber("-9223372036854775808"));
+}
+
+/*Bignumber::Bignumber(double num){
+    constexpr int doubleMax = 320;//double类型所能表示的最大数字长度为308：1.79769e+308、2.22507e-308
+    char v[doubleMax];
+    std::memset(v,0,doubleMax);
+    if (num < 0) {
+        v[0] = '-';
+        num = -num;
+    }
+    else v[0] = '+';
+    std::sprintf(v + 1,"%g",num);
+    std::cout<<v<<std::endl;
+    std::string value(v);
+    formatString(value);
+    value_ = boost::shared_ptr<BignumberImpl> (new BignumberImpl(value));
+}
+TEST(Constructor,BignumberDoubleConstructor){
+    EXPECT_EQ(Bignumber(1.234),Bignumber("1.234"));
+    EXPECT_EQ(Bignumber(-1.234),Bignumber("-1.234"));
+    EXPECT_EQ(Bignumber(-1.23400),Bignumber("-1.234"));
+    EXPECT_EQ(Bignumber(0.23456),Bignumber("0.23456"));
+
+#include <limits>
+    std::cout<<std::numeric_limits<double>::max()<<std::endl;
+    std::cout<<std::numeric_limits<double>::min()<<std::endl;
+    EXPECT_EQ(Bignumber(std::numeric_limits<double>::max()),Bignumber("179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368"));
+//    EXPECT_EQ(Bignumber(std::numeric_limits<double>::min()),Bignumber("0"));
+}
+*/
 Bignumber& Bignumber::operator = (const Bignumber& other){
-    value_.reset();
     value_  =   other.value_;
     return *this;
 }
+
 Bignumber& Bignumber::operator = (Bignumber&& other){
     value_  =   other.value_;
     return *this;
@@ -166,7 +216,6 @@ std::istream& operator >> (std::istream& in,Bignumber& num){
     std::string v;
     in>>v;
     if (!checkString(v)) throw  std::invalid_argument("Input value is not a valid number!");
-    num.value_.reset();
     formatString(v);
     num.value_ = boost::shared_ptr<BignumberImpl> (new BignumberImpl(v));
     return in;

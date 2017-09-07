@@ -18,6 +18,8 @@ public:
     //Bignumber(double value);
     Bignumber(const char* value,size_t n);//value must be a valid number,and n is the length of value
     Bignumber(const std::string& value);//initial by std::string
+    Bignumber(long long num);//initial by long long
+//    Bignumber(double num);//initial by double
 
     Bignumber(const Bignumber& other);//copy constructor
     Bignumber& operator = (const Bignumber& other);//asign constructor
