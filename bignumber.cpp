@@ -80,12 +80,6 @@ Bignumber::Bignumber() : value_(new BignumberImpl(""))
 
 }*/
 
-Bignumber::Bignumber(const char *value, size_t n){
-    std::string v(value,n);
-    if (!checkString(v)) throw std::invalid_argument("Input value is not a valid number!");
-    formatString(v);
-    value_ = boost::shared_ptr<BignumberImpl>(new BignumberImpl(v));
-}
 Bignumber::Bignumber(const std::string & value){
     if (!checkString(value)) throw std::invalid_argument("Input value is not a valid number!");
     std::string v = value;
@@ -115,21 +109,17 @@ TEST(Bignumber,ThrowExceptionInConstructor){
     EXPECT_NO_THROW(Bignumber("-1234.56000"));
 }
 Bignumber::Bignumber(const Bignumber &other){
-    value_  =  other.value_;
+	if (value_ == other.value_) return;
+	value_ = other.value_;
 }
 Bignumber::Bignumber(Bignumber && other){
-    other.value_    =   nullptr;
+	value_ = other.value_;
 }
 Bignumber::Bignumber(long long num){
     constexpr int longMax = 24;//long long类型所能表示的最大数字的长度为20
     char v[longMax];
     std::memset(v,0,longMax);
-    if (num < 0) {
-        v[0] = '-';
-        num = -num;
-    }
-    else v[0] = '+';
-    std::sprintf(v + 1,"%lld",num);
+    std::sprintf(v,"%lld",num);
     std::string value(v);
     formatString(value);
     value_ = boost::shared_ptr<BignumberImpl> (new BignumberImpl(value));
@@ -147,12 +137,7 @@ TEST(Constructor,BignumberLongLongConstructor){
     constexpr int doubleMax = 320;//double类型所能表示的最大数字长度为308：1.79769e+308、2.22507e-308
     char v[doubleMax];
     std::memset(v,0,doubleMax);
-    if (num < 0) {
-        v[0] = '-';
-        num = -num;
-    }
-    else v[0] = '+';
-    std::sprintf(v + 1,"%g",num);
+    std::sprintf(v,"%g",num);
     std::cout<<v<<std::endl;
     std::string value(v);
     formatString(value);
@@ -172,7 +157,8 @@ TEST(Constructor,BignumberDoubleConstructor){
 }
 */
 Bignumber& Bignumber::operator = (const Bignumber& other){
-    value_  =   other.value_;
+	if (value_ != other.value_) 
+		value_  =   other.value_;
     return *this;
 }
 
@@ -212,6 +198,9 @@ bool operator > (const Bignumber & num1,const Bignumber & num2){return *(num1.va
 bool operator <= (const Bignumber & num1,const Bignumber & num2){return *(num1.value_) <= *(num2.value_);};
 bool operator >= (const Bignumber & num1,const Bignumber & num2){return *(num1.value_) >= *(num2.value_);};
 
+/****************************************
+ * Bignumber的输入、输出操作符
+ * **************************************/
 std::istream& operator >> (std::istream& in,Bignumber& num){
     std::string v;
     in>>v;
@@ -220,7 +209,6 @@ std::istream& operator >> (std::istream& in,Bignumber& num){
     num.value_ = boost::shared_ptr<BignumberImpl> (new BignumberImpl(v));
     return in;
 }
-
 std::ostream& operator << (std::ostream& out,const Bignumber& num){
     out<<(num.value_->getValue());
     return out;
