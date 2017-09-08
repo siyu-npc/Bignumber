@@ -1,4 +1,5 @@
-#include "bignumber.h"
+#include "test_bignumber.h"
+#include "gtest/gtest.h"
 #include <regex>
 #include <exception>
 #include <cstdio>
@@ -21,33 +22,14 @@ static bool checkString(const std::string& value){
     return std::regex_match(value,pattern);
 }
 
-void formatString(std::string & numStr){
-    std::string tmp;
-    size_t nonZeroBegin = 0;
-    if (numStr[0] == '-' || numStr[0] == '+') {
-        tmp.push_back(numStr[0]);
-        nonZeroBegin = numStr.find_first_not_of('0',1);
-    }
-    else{
-        tmp.push_back('+');
-        nonZeroBegin = numStr.find_first_not_of('0');
-    }
-    if (nonZeroBegin == std::string::npos){
-        numStr = "+0";
-        return;
-    }
-    size_t endPos = 0,dotPos = 0;
-    if ((dotPos = numStr.find('.')) != std::string::npos){
-        size_t nonZeroEnd   = numStr.find_last_not_of('0');
-        if (dotPos < nonZeroEnd) endPos = nonZeroEnd;
-        else endPos = dotPos - 1;
-    }
-    else endPos = numStr.size() - 1;
-    if (nonZeroBegin == dotPos) nonZeroBegin -= 1;
-    do {
-        tmp.push_back(numStr[nonZeroBegin]);
-    } while ((++nonZeroBegin) <= endPos);
-    numStr = tmp;
+TEST(CheckString,CheckStringOfNumIsValid){
+    const char * trueCase[] = {"","0","0.0","0.","12345678","+12345678","123.123","-123344","-1233.09"};
+    const char * falseCase[] = {"--0","++0","0.12.3","-1234..4","1234wsd","00--+1234.0","+.123",".123.00"};
+    for (auto TcaseItem : trueCase)
+        EXPECT_TRUE(checkString(std::string(TcaseItem)))<<TcaseItem<<"  is false";
+
+    for (auto FcaseItem : falseCase)
+        EXPECT_FALSE(checkString(std::string(FcaseItem)))<<FcaseItem<<"  is true";
 }
 
 Bignumber::Bignumber() : value_(new BignumberImpl(""))
@@ -64,7 +46,28 @@ Bignumber::Bignumber(const std::string & value){
     formatString(v);
     value_ = boost::shared_ptr<BignumberImpl>(new BignumberImpl(v));
 }
+TEST(Bignumber,ThrowExceptionInConstructor){
+    EXPECT_THROW(Bignumber("--"),std::invalid_argument);
+    EXPECT_THROW(Bignumber("--0"),std::invalid_argument);
+    EXPECT_THROW(Bignumber("++0-0"),std::invalid_argument);
+    EXPECT_THROW(Bignumber("0.12."),std::invalid_argument);
+    EXPECT_THROW(Bignumber("-1234..4"),std::invalid_argument);
+    EXPECT_THROW(Bignumber("1234wsd"),std::invalid_argument);
+    EXPECT_THROW(Bignumber("00--+1234.0"),std::invalid_argument);
+    EXPECT_THROW(Bignumber("+.123"),std::invalid_argument);
+    EXPECT_THROW(Bignumber(".123"),std::invalid_argument);
 
+    EXPECT_NO_THROW(Bignumber(""));
+    EXPECT_NO_THROW(Bignumber("0"));
+    EXPECT_NO_THROW(Bignumber("0.0"));
+    EXPECT_NO_THROW(Bignumber("0."));
+    EXPECT_NO_THROW(Bignumber("12345678"));
+    EXPECT_NO_THROW(Bignumber("+12345678"));
+    EXPECT_NO_THROW(Bignumber("-12345678"));
+    EXPECT_NO_THROW(Bignumber("123.123"));
+    EXPECT_NO_THROW(Bignumber("+123.456"));
+    EXPECT_NO_THROW(Bignumber("-1234.56000"));
+}
 Bignumber::Bignumber(const Bignumber &other){
 	if (value_ == other.value_) return;
 	value_ = other.value_;
@@ -81,6 +84,15 @@ Bignumber::Bignumber(const long long & num){
     formatString(value);
     value_ = boost::shared_ptr<BignumberImpl> (new BignumberImpl(value));
 }
+TEST(Constructor,BignumberLongLongConstructor){
+    EXPECT_EQ(Bignumber(1234),Bignumber("1234"));
+    EXPECT_EQ(Bignumber(static_cast<long long>(-1234)),Bignumber("-1234"));
+
+#include <limits>
+    EXPECT_EQ(Bignumber(std::numeric_limits<long long>::max()),Bignumber("+9223372036854775807"));
+    EXPECT_EQ(Bignumber(std::numeric_limits<long long>::min()),Bignumber("-9223372036854775808"));
+}
+
 /*Bignumber::Bignumber(double num){
     constexpr int doubleMax = 320;//double类型所能表示的最大数字长度为308：1.79769e+308、2.22507e-308
     char v[doubleMax];

@@ -1,14 +1,10 @@
 #include <iostream>
-#include "gtest/gtest.h"
 #include "bignumber.h"
 
 using namespace std;
 
 int main(int argc,char **argv)
 {
-    ::testing::InitGoogleTest(&argc,argv);
-    int _ = RUN_ALL_TESTS();
-
    cout<<"**********************************\n";
    cout<<"**Welcome use this program!Have a enjoy. **\n";
    cout<<"**Please input formule to calculate.\n";
@@ -36,11 +32,10 @@ int main(int argc,char **argv)
         cout<<err.what()<<endl;
         cout<<"Please reinput a correct num!";
     }
-    //catch (...){
+    catch (...){
         cout<<"Oops!Some unexpected errors happened!"<<endl;
-    //}
+    }
 
-    cout << "Hello World!" << endl;
     return 0;
 }
 

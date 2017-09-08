@@ -6,16 +6,17 @@
 
 class BignumberImpl
 {
+    friend std::istream& operator >> (std::istream& in,BignumberImpl& num);
+    friend std::ostream& operator << (std::ostream& out,const BignumberImpl& num);
+
 private:
     std::string numStr_;
     size_t dotPos_;//小数点的位置
     enum class Mark{POSITIVE,NEGETIVE};//代表正负数
     Mark mark_;//数值符号
 
-
 public:
     explicit BignumberImpl(const std::string & value = "");
-
     BignumberImpl(const BignumberImpl & value)    =   default;
     BignumberImpl(BignumberImpl && value)   =   default;
     BignumberImpl& operator = (const BignumberImpl & value)   =   default;
@@ -45,9 +46,6 @@ public:
     bool operator <= (const BignumberImpl & other) const;
     bool operator >= (const BignumberImpl & other) const;
 
-    friend std::istream& operator >> (std::istream& in,BignumberImpl& num);
-    friend std::ostream& operator << (std::ostream& out,const BignumberImpl& num);
-    friend class Bignumber;
 };
 
 extern std::istream& operator >> (std::istream& in,BignumberImpl& num);

@@ -1,5 +1,35 @@
-#include "bignumberimpl.h"
+#include "test_bignumberimpl.h"
+#include "gtest/gtest.h"
 #include <regex>
+
+void formatString(std::string & numStr){
+    std::string tmp;
+    size_t nonZeroBegin = 0;
+    if (numStr[0] == '-' || numStr[0] == '+') {
+        tmp.push_back(numStr[0]);
+        nonZeroBegin = numStr.find_first_not_of('0',1);
+    }
+    else{
+        tmp.push_back('+');
+        nonZeroBegin = numStr.find_first_not_of('0');
+    }
+    if (nonZeroBegin == std::string::npos){
+        numStr = "+0";
+        return;
+    }
+    size_t endPos = 0,dotPos = 0;
+    if ((dotPos = numStr.find('.')) != std::string::npos){
+        size_t nonZeroEnd   = numStr.find_last_not_of('0');
+        if (dotPos < nonZeroEnd) endPos = nonZeroEnd;
+        else endPos = dotPos - 1;
+    }
+    else endPos = numStr.size() - 1;
+    if (nonZeroBegin == dotPos) nonZeroBegin -= 1;
+    do {
+        tmp.push_back(numStr[nonZeroBegin]);
+    } while ((++nonZeroBegin) <= endPos);
+    numStr = tmp;
+}
 
 std::string BignumberImpl::getValue() const {
     std::string result(this->size(),'0');
@@ -147,6 +177,31 @@ static std::string positiveSub(const std::string & num1,size_t dot1,const std::s
     //格式化结果并返回
     formatString(result);
     return result;
+}
+/**************************************
+ * 对上面两个加减法运算进行测试
+ * ***********************************/
+TEST(Aalculate,AddTwoPositive){
+    EXPECT_EQ(positiveAdd("+1234",0,"+1234",0),std::string("+2468"));
+    EXPECT_EQ(positiveAdd("+9999999999999999999999999999",0,"+9999999999999999999999999999",0),"+19999999999999999999999999998");
+    EXPECT_EQ(positiveAdd("+1234.01",2,"+1234.01",2),"+2468.02");
+    EXPECT_EQ(positiveAdd("+9999999999999999999999999999.999999999999999",15,"+9999999999999999999999999999.999999999999999",15),\
+              "+19999999999999999999999999999.999999999999998");
+    EXPECT_EQ(positiveAdd("+9999999999999999999999999999.999999999999999",15,"+9999999999999999999999999999",0),\
+              "+19999999999999999999999999998.999999999999999");
+    EXPECT_EQ(positiveAdd("+55555444446666600000.1234",4,"+55555666664444499999.8766",4),"+111111111111111100000");
+    EXPECT_EQ(positiveAdd("+987654321.0123456789",10,"+111111111111111.345678",6),"+111112098765432.3580236789");
+}
+TEST(Calculate,SubTwoPositive){
+    EXPECT_EQ(positiveSub("+1234",0,"+1234",0),"+0");
+    EXPECT_EQ(positiveSub("+999999999777777777666666666",0,"+444444444333333333222222222",0),\
+              "+555555555444444444444444444");
+    EXPECT_EQ(positiveSub("+123.002",3,"+123.002",3),"+0");
+    EXPECT_EQ(positiveSub("+1234.2341",4,"+234.99998",5),"+999.23412");
+    EXPECT_EQ(positiveSub("+999999999999999.111111111111111",15,"+111111111111111.999999999999999",15),\
+              "+888888888888887.111111111111112");
+    EXPECT_EQ(positiveSub("+9999999999.1111111111",10,"+999999999.999999999999999",15),\
+              "+8999999999.111111111100001");
 }
 BignumberImpl BignumberImpl::operator + (const BignumberImpl & other) {
     std::string result;
@@ -300,3 +355,73 @@ BignumberImpl::BignumberImpl(const std::string & value):dotPos_(0),mark_(Mark::P
 }
 
 
+//测试代码
+TEST(getValue,getValueCase){
+    const char * inputCases[] = {"","+0","+123","-123","+123","+1123.322","+1123.322","-1123.322","+1234.5678"};
+    const char * checkCases[] = {"+0","+0","+123","-123","+123","+1123.322","+1123.322","-1123.322","+1234.5678"};
+    for (size_t i = 0;i < sizeof(inputCases) / sizeof(char*);++i){
+        BignumberImpl tmp(inputCases[i]);
+        EXPECT_EQ(tmp.getValue(),checkCases[i]);
+    }
+}
+
+
+TEST(Calculate,BignumberImplOperatorAdd){
+    EXPECT_EQ(BignumberImpl("+0") + BignumberImpl("+0"),BignumberImpl("+0"));
+    EXPECT_EQ(BignumberImpl("+0.0") + BignumberImpl("-0.0"),BignumberImpl("+0"));
+    EXPECT_EQ(BignumberImpl("+1234") + BignumberImpl("-1234"),BignumberImpl("+0"));
+    EXPECT_EQ(BignumberImpl("+1234.5678") + BignumberImpl("-1234.5678"),BignumberImpl("+0"));
+    EXPECT_EQ(BignumberImpl("+1234") + BignumberImpl("+1234"),BignumberImpl("+2468"));
+    EXPECT_EQ(BignumberImpl("+9999999999999999999999999999") + BignumberImpl("+9999999999999999999999999999"),\
+              BignumberImpl("+19999999999999999999999999998"));
+    EXPECT_EQ(BignumberImpl("+1234.01") + BignumberImpl("+1234.01"),BignumberImpl("+2468.02"));
+    EXPECT_EQ(BignumberImpl("+9999999999999999999999999999.999999999999999") + \
+              BignumberImpl("+9999999999999999999999999999.999999999999999"),\
+              BignumberImpl("+19999999999999999999999999999.999999999999998"));
+    EXPECT_EQ(BignumberImpl("+9999999999999999999999999999.999999999999999") + \
+                            BignumberImpl("+9999999999999999999999999999"),\
+              BignumberImpl("+19999999999999999999999999998.999999999999999"));
+    EXPECT_EQ(BignumberImpl("+55555444446666600000.1234") + \
+              BignumberImpl("+55555666664444499999.8766"),BignumberImpl("+111111111111111100000"));
+    EXPECT_EQ(BignumberImpl("+987654321.0123456789") + \
+              BignumberImpl("+111111111111111.345678"),BignumberImpl("+111112098765432.3580236789"));
+    EXPECT_EQ(BignumberImpl("+123456") + BignumberImpl("-3456"),BignumberImpl("+120000"));
+    EXPECT_EQ(BignumberImpl("-1234.5678") + BignumberImpl("+234.4322"),BignumberImpl("-1000.1356"));
+    EXPECT_EQ(BignumberImpl("-23456.9876") + BignumberImpl("-1234567.897654321"),BignumberImpl("-1258024.885254321"));
+}
+
+TEST(Calculate,BignumberImplOperatorSub){
+    EXPECT_EQ(BignumberImpl("+0") - BignumberImpl("+0"),BignumberImpl("+0"));
+    EXPECT_EQ(BignumberImpl("+1234") - BignumberImpl("-1234"),BignumberImpl("+2468"));
+    EXPECT_EQ(BignumberImpl("+1234.5678") - BignumberImpl("-1234.5678"),BignumberImpl("+1234.5678") + BignumberImpl("+1234.5678"));
+    EXPECT_EQ(BignumberImpl("+1234") - BignumberImpl("+1234.01"),BignumberImpl("-0.01"));
+    EXPECT_EQ(BignumberImpl("+9999999999999999999999999999") - BignumberImpl("+9999999999999999999999999999"),\
+              BignumberImpl("+0"));
+    EXPECT_EQ(BignumberImpl("-1234.01") - BignumberImpl("-1234.01"),BignumberImpl("+0"));
+    EXPECT_EQ(BignumberImpl("+9999999999999999999999999999.999999999999999") - \
+              BignumberImpl("+9999999999999999999999999999.999999999999998"),\
+              BignumberImpl("+0.000000000000001"));
+    EXPECT_EQ(BignumberImpl("-9999999999999999999999999999.999999999999999") - \
+                            BignumberImpl("+9999999999999999999999999999"),\
+              BignumberImpl("-19999999999999999999999999998.999999999999999"));
+}
+
+TEST(Compare,Less){
+    EXPECT_LT(BignumberImpl("+12345678"),BignumberImpl("+123456789"));
+    EXPECT_LT(BignumberImpl("-123456789"),BignumberImpl("0"));
+    EXPECT_LT(BignumberImpl("-123456789"),BignumberImpl("-1"));
+    EXPECT_LT(BignumberImpl("+1234.567"),BignumberImpl("+1234.5678"));
+    EXPECT_LT(BignumberImpl("-1234.567"),BignumberImpl("-1234.56"));
+}
+
+TEST(Compare,EqualTest){
+    EXPECT_EQ(BignumberImpl("+1234567890987654321"),BignumberImpl("+1234567890987654321"));
+    EXPECT_EQ(BignumberImpl("+1234567890.0987654321"),BignumberImpl("+1234567890.0987654321"));
+    EXPECT_NE(BignumberImpl("+1234567890"),BignumberImpl("0"));
+    EXPECT_NE(BignumberImpl("-1234567.89"),BignumberImpl("+1234567.89"));
+}
+
+int main(int argc,char **argv){
+	::testing::InitGoogleTest(&argc,argv);
+	return RUN_ALL_TESTS();
+}
