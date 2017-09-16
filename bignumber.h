@@ -1,10 +1,12 @@
-#ifndef BIGNUMBER_H
-#define BIGNUMBER_H
+#ifndef TEST_BIGNUMBER_H
+#define TEST_BIGNUMBER_H
 
-#include "bignumberimpl.h"
 #include <string>
 #include <iostream>
 #include <boost/shared_ptr.hpp>
+#include <bignumberimpl.h>
+
+class BignumberImpl;
 
 class Bignumber
 {
@@ -19,6 +21,8 @@ public:
     Bignumber(const std::string& value);//initial by std::string
     Bignumber(const char* value,size_t n):Bignumber(std::string(value,n)){};//value must be a valid number,and n is the length of value
     Bignumber(const long long & num);//initial by long long
+//	Bignumber(long num):Bignumber(static_cast<long long>(num)){};
+//	Bignumber(int num):Bignumber(static_cast<long long>(num)){};
 //    Bignumber(double num);//initial by double
 
     Bignumber(const Bignumber& other);//copy constructor
@@ -68,4 +72,4 @@ extern bool operator >= (const Bignumber & num1,const Bignumber & num2);
 extern Bignumber operator + (const Bignumber& num1,const Bignumber& num2);
 extern Bignumber operator - (const Bignumber& num1,const Bignumber& num2);
 
-#endif // BIGNUMBER_H
+#endif // TEST_BIGNUMBER_H

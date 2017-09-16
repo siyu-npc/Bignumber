@@ -1,12 +1,15 @@
 #include <iostream>
 #include "bignumber.h"
+#include "gtest/gtest.h"
 
 using namespace std;
 
 int main(int argc,char **argv)
 {
+	::testing::InitGoogleTest(&argc,argv);
+	RUN_ALL_TESTS();
    cout<<"**********************************\n";
-   cout<<"**Welcome use this program!Have a enjoy. **\n";
+   cout<<"**Welcome use this program!Enjoy it. **\n";
    cout<<"**Please input formule to calculate.\n";
    cout<<"**********************************\n";
  restart:
