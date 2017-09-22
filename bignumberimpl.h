@@ -8,7 +8,6 @@ class BignumberImpl
 {
     friend std::istream& operator >> (std::istream& in,BignumberImpl& num);
     friend std::ostream& operator << (std::ostream& out,const BignumberImpl& num);
-    friend BignumberImpl positiveAdd(const BignumberImpl & n1,const BignumberImpl & n2);
 
 private:
     std::string value_;
@@ -42,6 +41,8 @@ public:
     BignumberImpl& operator += (const BignumberImpl& other);
     BignumberImpl operator - (const BignumberImpl& other) const;
     BignumberImpl& operator -= (const BignumberImpl& other);
+	BignumberImpl operator * (const BignumberImpl & other) const;
+	BignumberImpl& operator *= (const BignumberImpl & other);
 
     bool operator == (const BignumberImpl & other) const;
     bool operator != (const BignumberImpl & other) const;

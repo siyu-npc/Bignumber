@@ -51,6 +51,8 @@ public:
     Bignumber& operator += (const Bignumber& other);
     friend Bignumber operator - (const Bignumber& num1,const Bignumber& num2);
     Bignumber& operator -= (const Bignumber& other);
+	friend Bignumber operator * (const Bignumber& num1,const Bignumber & num2);
+	Bignumber& operator *= (const Bignumber& other);
 
     friend std::istream& operator >> (std::istream& in,Bignumber& num);
     friend std::ostream& operator << (std::ostream& out,const Bignumber& num);

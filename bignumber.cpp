@@ -54,10 +54,6 @@ Bignumber::Bignumber() : value_(new BignumberImpl(""))
 {
 }
 
-/*Bignumber::Bignumber(double value){
-
-}*/
-
 Bignumber::Bignumber(const std::string & value){
     if (!checkString(value)) throw std::invalid_argument("Input value is not a valid number!");
     std::string v = value;
@@ -118,8 +114,8 @@ Bignumber& Bignumber::operator = (Bignumber&& other){
 Bignumber::~Bignumber(){}
 
 /*************************************
- * Bignumber的加减法，内部直接调用
- * BignumberImpl的加减法
+ * Bignumber的加减和乘法，内部直接调用
+ * BignumberImpl的加减乘法
  * ***********************************/
 Bignumber operator + (const Bignumber& num1,const Bignumber& num2){
     return Bignumber(*(num1.value_) + *(num2.value_));
@@ -134,6 +130,13 @@ Bignumber operator - (const Bignumber& num1,const Bignumber& num2){
 Bignumber& Bignumber::operator -= (const Bignumber & other){
     *this = *this - other;
     return *this;
+}
+Bignumber operator * (const Bignumber& num1,const Bignumber& num2) {
+	return Bignumber(*(num1.value_) * (*(num2.value_)));
+}
+Bignumber& Bignumber::operator *= (const Bignumber & other) {
+	*this = *this * other;
+	return *this;
 }
 
 /***************************************

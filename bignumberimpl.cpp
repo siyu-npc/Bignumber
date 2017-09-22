@@ -1,35 +1,19 @@
 #include "bignumberimpl.h"
 #include <regex>
 #include <string>
+#include <cmath>
 #include <iostream>
 
 extern void formatString(std::string & numStr);
-
-std::string BignumberImpl::getValue() const {
-    /*std::string result(this->size(),'0');
-    if (isNegetive()) result[0] = '-';
-    else result[0] = '+';
-    size_t i = 1;
-    for (;i <= getIntegerSize();++i){
-        result[i] = value_[i - 1];
-    }
-    if (getPrecision() != 0) {
-        result[i] = '.';
-        for (;i <= size() - 2;++i) result[i + 1] = value_[i - 1];
-    }
-
-    return result;*/
-    return value_;
-}
 
 /******************************************
  * 两个positive BignumberImpl 相加，
  * NOTE：必须保证传入的数为整数或0
  * 返回值：相加得到的BignumberImpl
  * ****************************************/
-BignumberImpl positiveAdd(const BignumberImpl & n1,const BignumberImpl & n2){
+static BignumberImpl positiveAdd(const BignumberImpl & n1,const BignumberImpl & n2){
     //对两个数的小数部分补零以使小数部分长度相同
-    std::string left = n1.value_,right = n2.value_;
+    std::string left = n1.getValue(),right = n2.getValue();
     if (n1.getDecimalSize() > n2.getDecimalSize()) {
         if (n2.getDecimalSize() == 0)//如果两个数中其中一个是整数另一个是小数，则在补零前需要在整数后加一个小数点
             right.push_back('.');
@@ -51,7 +35,7 @@ BignumberImpl positiveAdd(const BignumberImpl & n1,const BignumberImpl & n2){
     size_t i = left.size();
     while(i-- > 1) {
         if (left[i] != '.') {
-            int tmp = left[i] - '0' + right[i] - '0' + flag;
+            int tmp = (left[i] - '0') + (right[i] - '0') + flag;
             result[i + 1] = tmp % 10 + '0';
             flag = ((tmp >= 10) ? 1 : 0);
         }
@@ -64,6 +48,9 @@ BignumberImpl positiveAdd(const BignumberImpl & n1,const BignumberImpl & n2){
     return sum;
 }
 
+static std::string positiveAdd(const std::string & n1,const std::string & n2){
+    return positiveAdd(BignumberImpl(n1),BignumberImpl(n2)).getValue();
+}
 /******************************************
  * 两个positive BignumberImpl相减，
  * NOTE：必须保证num1>=num2,
@@ -88,8 +75,6 @@ static BignumberImpl positiveSub(const BignumberImpl & n1,const BignumberImpl & 
     }
     else left.insert(1,n2.getIntegerSize() - n1.getIntegerSize(),'0');
 
-    std::cout<<"left = "<<left<<" ,right = "<<right<<std::endl;
-
     std::string result(left.size() + 1,'0');
     int flag = 0;//借位标识
     size_t i = left.size();
@@ -106,12 +91,91 @@ static BignumberImpl positiveSub(const BignumberImpl & n1,const BignumberImpl & 
         }
         else result[i + 1] = '.';
     }
-    std::cout<<"result = "<<result<<std::endl;
 
     formatString(result);
     BignumberImpl sum(result);
     return sum;
+}
+static std::string positiveSub(const std::string & n1,const std::string & n2){
+	return positiveSub(BignumberImpl(n1),BignumberImpl(n2)).getValue();
+}
+/************************************************
+ * the multiple method of BignumberImpl
+ * *********************************************/
+BignumberImpl BignumberImpl::operator * (const BignumberImpl & other) const {
+	std::string left = getValue();
+	std::string right = other.getValue();
+	std::string result("0");
 
+	//将两个只包含数字的字符串相加
+	//返回相加的结果
+	auto addString = [](std::string & str1,std::string & str2) -> std::string {
+		size_t i = str1.size();
+		size_t j = str2.size();
+		size_t len = std::max(i,j);
+		std::string result(len + 1,'0');
+		int flag = 0;
+		while (i && j) {
+			int tmp = (str1[--i] - '0') + (str2[--j] - '0') + flag;
+			result[len--] = tmp % 10 + '0';
+			flag = tmp / 10;
+		}
+		result[len] += flag;
+		while (i--) {
+			result[len--] += (str1[i] - '0');
+		}
+		while (j--) {
+			result[len--] += (str2[j] - '0');
+		}
+		std::cout<<str1 << "+" <<str2 << " = "<<result<<std::endl;
+		return result;
+	};
+	size_t i = left.size();
+	while (i--) {
+		if (left[i] == '+' || left[i] == '-') break;
+		if (left[i] == '.') continue;
+		std::string tmp("");
+		int flag = 0;
+		size_t j = right.size();
+
+		while (j--){
+			if (right[j] == '.') continue;
+			if (right[j] == '+' || right[j] == '-') break;
+			int mul = (left[i] - '0') * (right[j] - '0') + flag;
+			tmp.push_back(mul % 10 + '0');
+			flag = mul / 10;
+		}
+		std::reverse(tmp.begin(),tmp.end());
+		if (getDecimalSize() != 0 && (left.size() - i > getDecimalSize()))
+			tmp += std::string(left.size() - i - 2,'0');
+		else tmp += std::string(left.size() - i - 1,'0');
+		std::cout<<"tmp = "<<tmp<<std::endl;
+		result = addString(result,tmp);
+		std::cout<<"result = "<<result<<std::endl;
+	}
+	
+	//如果运算结果是小数，则插入小数点
+	if (getDecimalSize() != 0 || other.getDecimalSize() != 0) 
+		result.insert(result.size() - (getDecimalSize() + other.getDecimalSize()),1,'.');
+	if (left[0] != right[0]) result = "-" + result;
+	else result = "+" + result;
+	formatString(result);
+	return BignumberImpl(result);
+}
+BignumberImpl& BignumberImpl::operator *= (const BignumberImpl & other) {
+	*this = *this + other;
+	return *this;
+}
+
+/*************************************************
+ * BignumberImpl的构造函数
+ * BignumberImpl仅接受一个字符串构造函数的参数，并且
+ * 该字符串合法且经过了格式
+ * ***********************************************/
+BignumberImpl::BignumberImpl(const std::string & value):value_(value){
+    if (value == "") value_ = "+0";
+    if (value_.find('.') == std::string::npos) dotPos_ = 0;
+    else dotPos_ = value_.size() - value_.find('.') - 1;
 }
 
 BignumberImpl BignumberImpl::operator + (const BignumberImpl & other) const {
@@ -139,7 +203,10 @@ BignumberImpl BignumberImpl::operator + (const BignumberImpl & other) const {
     }
     return result;
 }
-
+BignumberImpl& BignumberImpl::operator += (const BignumberImpl & other) {
+	*this = *this + other;
+	return *this;
+}
 BignumberImpl BignumberImpl::operator - (const BignumberImpl & other) const {
     BignumberImpl result;
     if (this->isPositive()){
@@ -165,12 +232,19 @@ BignumberImpl BignumberImpl::operator - (const BignumberImpl & other) const {
     }
     return result;
 }
+BignumberImpl& BignumberImpl::operator -= (const BignumberImpl & other) {
+	*this = *this + other;
+	return *this;
+}
 
 std::ostream& operator << (std::ostream& out,const BignumberImpl& num){
     out<<num.getValue();
     return out;
 }
 
+/********************************
+ * compare functions
+ *******************************/
 bool BignumberImpl::operator == (const BignumberImpl & other) const {
     return value_ == other.value_;
 }
@@ -210,6 +284,9 @@ bool BignumberImpl::operator >= (const BignumberImpl & other) const {
     return (*this > other || *this == other);
 }
 
+/*************************************
+ * getter functions of BignumberImpl
+ * **********************************/
 BignumberImpl BignumberImpl::getNegete() const {
 	if (value_ == "+0") return *this;
     BignumberImpl negete(*this);
@@ -222,16 +299,10 @@ BignumberImpl BignumberImpl::getAbs() const {
     abs.value_[0] = '+';
     return abs;
 }
-/*************************************************
- * BignumberImpl的构造函数
- * BignumberImpl仅接受一个字符串构造函数的参数，并且
- * 该字符串合法且经过了格式
- * ***********************************************/
-BignumberImpl::BignumberImpl(const std::string & value):value_(value){
-    if (value == "") value_ = "+0";
-    if (value_.find('.') == std::string::npos) dotPos_ = 0;
-    else dotPos_ = value_.size() - value_.find('.') - 1;
+std::string BignumberImpl::getValue() const {
+	return value_;
 }
+
 
 /*************************************************
  * 测试代码
@@ -264,6 +335,7 @@ TEST(Calculate,SubTwoPositive){
     EXPECT_EQ(positiveSub(BignumberImpl("+9999999999.1111111111"),BignumberImpl("+999999999.999999999999999")),\
               BignumberImpl("+8999999999.111111111100001"));
 }
+
 TEST(BignumberImplMemFun,getValue){
     const char * inputCases[] = {"","+0","+123","-123","+123","+1123.322","+1123.322","-1123.322","+1234.5678"};
     const char * checkCases[] = {"+0","+0","+123","-123","+123","+1123.322","+1123.322","-1123.322","+1234.5678"};
@@ -321,6 +393,20 @@ TEST(Calculate,BignumberImplOperatorSub){
                             BignumberImpl("+9999999999999999999999999999"),\
               BignumberImpl("-19999999999999999999999999998.999999999999999"));
 }
+TEST(Calculate,BignumberImplOperatorMul){
+	EXPECT_EQ(BignumberImpl("+1")*BignumberImpl("+1"),BignumberImpl("+1"));
+	EXPECT_EQ(BignumberImpl("+10")*BignumberImpl("+1"),BignumberImpl("+10"));
+
+	EXPECT_EQ(BignumberImpl("+11")*BignumberImpl("+999"),BignumberImpl("+10989"));
+	EXPECT_EQ(BignumberImpl("+10")*BignumberImpl("-1"),BignumberImpl("-10"));
+	EXPECT_EQ(BignumberImpl("+100.11111")*BignumberImpl("+1"),BignumberImpl("+100.11111"));
+	EXPECT_EQ(BignumberImpl("-100.11111")*BignumberImpl("+1"),BignumberImpl("-100.11111"));
+	EXPECT_EQ(BignumberImpl("+1.23")*BignumberImpl("+109.12345"),BignumberImpl("+134.2218435"));
+	EXPECT_EQ(BignumberImpl("+999999999999999.9999999999")*BignumberImpl("+10000000000000000000"),\
+			BignumberImpl("+9999999999999999999999999000000000"));
+	EXPECT_EQ(BignumberImpl("+999999999999999.9999999999")*BignumberImpl("+10000000000000000000.1"),\
+			BignumberImpl("+10000000000000000000099998999999999.99999999999"));
+}
 TEST(Compare,Less){
     EXPECT_LT(BignumberImpl("+12345678"),BignumberImpl("+123456789"));
     EXPECT_LT(BignumberImpl("-123456789"),BignumberImpl("+0"));
@@ -354,4 +440,11 @@ TEST(BignumberImplMemFun,getIntegerSize){
     size_t output[] = {1,13,1,8};
     for (size_t i = 0;i < 4;++i)
         EXPECT_EQ(BignumberImpl(input[i]).getIntegerSize(),output[i]);
+}
+TEST(BignumberImplMemFun,getAbs){
+    const char * input[] = {"+0","+1234545345345","-0.12345","+12334234.12312312"};
+	const char * output[] = {"+0","+1234545345345","-999999999999999","+0.12345","-0.12345"};
+	for (size_t i = 0;i < sizeof(input) / sizeof(std::string);++i){
+		EXPECT_EQ(BignumberImpl(input[i]).getAbs(),BignumberImpl(output[i]));
+	}
 }
